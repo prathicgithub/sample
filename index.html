@@ -581,14 +581,16 @@
                 document.getElementById("class-selector").selectedIndex
               ].text +
               " Recordings";
-            initApp(videoLibrary[selectedClass].videos);
+
+            // Initialize the app and immediately load the first video in fullscreen
+            initApp(videoLibrary[selectedClass].videos, true);
           } else {
             document.getElementById("login-error").style.display = "block";
           }
         });
 
       // Initialize app with videos
-      function initApp(videos) {
+      function initApp(videos, autoplayFirstVideo = false) {
         // Clear existing carousel items if any
         const carouselContainer = document.getElementById("carousel-container");
         carouselContainer.innerHTML = "";
@@ -640,7 +642,16 @@
                 widget_referrer: window.location.origin,
               },
               events: {
-                onReady: onPlayerReady,
+                onReady: function (event) {
+                  onPlayerReady(event);
+
+                  // If autoplayFirstVideo is true, load first video in fullscreen
+                  if (autoplayFirstVideo && videos.length > 0) {
+                    setTimeout(function () {
+                      loadVideo(videos[0], 0);
+                    }, 500);
+                  }
+                },
                 onStateChange: onPlayerStateChange,
               },
             });
@@ -654,6 +665,13 @@
           // Player already exists, just load first video
           if (videos.length > 0) {
             player.cueVideoById(videos[0].id);
+
+            // If autoplayFirstVideo is true, load first video in fullscreen
+            if (autoplayFirstVideo) {
+              setTimeout(function () {
+                loadVideo(videos[0], 0);
+              }, 500);
+            }
           }
         }
 
