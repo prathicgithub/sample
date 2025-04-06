@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>BSR March Month Saree Tassels Class Recordings</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        background: #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        overflow-x: hidden;
+      }
+      .player-container {
+        width: 100%;
+        max-width: 800px;
+        position: relative;
+        margin: 10px;
+      }
+      .video-wrapper {
+        position: relative;
+        overflow: hidden;
+        background: #000;
+      }
+      /* Normal mode video wrapper */
+      .video-wrapper {
+        padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        height: 0;
+      }
+      /* Fullscreen mode video wrapper - FIXED */
+      .fullscreen-mode .video-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        padding-bottom: 0;
+      }
+
+      /* Player iframe container */
+      #player {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* YouTube blocker overlay - NEW */
+      .youtube-blocker {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        cursor: pointer;
+      }
+
+      /* Make the iframe fill the parent in fullscreen mode - FIXED */
+      .fullscreen-mode #player {
+        object-fit: contain;
+      }
+
+      .controls {
+        background: rgba(0, 0, 0, 0.9);
+        padding: 12px 15px;
+        display: flex;
+        align-items: center;
+        border-radius: 0 0 8px 8px;
+      }
+      .fullscreen-mode .controls {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1001;
+        border-radius: 0;
+      }
+      .control-btn {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 20px;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        margin: 0 5px;
+        touch-action: manipulation;
+      }
+      .progress-container {
+        flex-grow: 1;
+        height: 8px;
+        background: #333;
+        margin: 0 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        position: relative;
+      }
+      .progress-bar {
+        height: 100%;
+        background: #f00;
+        width: 0%;
+        border-radius: 4px;
+        transition: width 0.1s linear;
+      }
+      .time-display {
+        color: white;
+        font-size: 14px;
+        font-family: monospace;
+        min-width: 100px;
+        text-align: center;
+      }
+
+      /* Carousel Styles */
+      .carousel-view {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 800px;
+        padding: 0 10px;
+      }
+      .carousel-container {
+        display: flex;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        margin-bottom: 15px;
+        padding: 15px 0;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      .carousel-container::-webkit-scrollbar {
+        display: none;
+      }
+      .carousel-item {
+        flex: 0 0 180px;
+        margin-right: 10px;
+        position: relative;
+        cursor: pointer;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: transform 0.3s;
+      }
+      .carousel-item:active {
+        transform: scale(0.95);
+      }
+      .carousel-item img {
+        width: 100%;
+        height: 101px;
+        object-fit: cover;
+        border-radius: 8px;
+      }
+      .carousel-item .title {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 5px;
+        font-size: 12px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .carousel-controls {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 15px;
+      }
+      .carousel-button {
+        background: #333;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 8px 15px;
+        margin: 0 5px;
+        cursor: pointer;
+        font-size: 14px;
+        touch-action: manipulation;
+      }
+      .carousel-button:active {
+        background: #555;
+      }
+
+      /* Fullscreen mode */
+      .fullscreen-mode {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+      }
+      .back-button {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+        cursor: pointer;
+        z-index: 1001;
+        display: none;
+        touch-action: manipulation;
+      }
+      .back-button:active {
+        background: rgba(50, 50, 50, 0.7);
+      }
+      .fullscreen-mode .back-button {
+        display: block;
+      }
+
+      /* View modes */
+      .view-carousel {
+        display: block;
+      }
+      .view-player {
+        display: none;
+      }
+      .fullscreen-mode .view-carousel {
+        display: none;
+      }
+      .fullscreen-mode .view-player {
+        display: block;
+        height: 100%;
+      }
+
+      /* Fullscreen button */
+      .fullscreen-btn {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 20px;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        margin: 0 5px;
+        touch-action: manipulation;
+      }
+
+      /* Landscape orientation message */
+      #landscape-message {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        z-index: 1002;
+        width: 80%;
+        max-width: 300px;
+      }
+
+      /* Mobile optimizations */
+      @media (max-width: 480px) {
+        .carousel-item {
+          flex: 0 0 150px;
+        }
+        .carousel-item img {
+          height: 84px;
+        }
+        .time-display {
+          min-width: 80px;
+          font-size: 12px;
+        }
+        .control-btn {
+          width: 35px;
+          height: 35px;
+        }
+        .carousel-controls {
+          margin-bottom: 10px;
+        }
+        .back-button {
+          width: 35px;
+          height: 35px;
+          font-size: 16px;
+        }
+        .fullscreen-btn {
+          width: 35px;
+          height: 35px;
+          font-size: 16px;
+        }
+      }
+
+      /* IMPROVED LOGIN UI STYLES */
+      #login-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+
+      .login-container {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(8px);
+        width: 90%;
+        max-width: 400px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .login-header {
+        color: white;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 28px;
+        font-weight: 600;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .class-selector {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        padding: 15px;
+        font-size: 16px;
+        color: white;
+        cursor: pointer;
+        outline: none;
+        transition: all 0.3s;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .class-selector:focus {
+        border-color: rgba(255, 255, 255, 0.5);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+      }
+
+      .class-selector option {
+        background: #2a2a2a;
+        color: white;
+      }
+
+      .login-input {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        padding: 15px;
+        font-size: 16px;
+        color: white;
+        outline: none;
+        transition: all 0.3s;
+      }
+
+      .login-input:focus {
+        border-color: rgba(255, 255, 255, 0.5);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+      }
+
+      .login-input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .login-button {
+        background: linear-gradient(45deg, #ef4444 0%, #f97316 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 15px;
+        font-size: 18px;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 10px;
+      }
+
+      .login-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      }
+
+      .login-button:active {
+        transform: translateY(0);
+      }
+
+      .login-error {
+        color: #ef4444;
+        text-align: center;
+        font-size: 14px;
+        margin-top: 15px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Login Screen -->
+    <div id="login-screen">
+      <div class="login-container">
+        <h2 class="login-header">BSR Class Recording</h2>
+        <form class="login-form" id="login-form">
+          <select class="class-selector" id="class-selector" required>
+            <option value="" disabled selected>Select your class</option>
+            <option value="fabric">Fabric Saree Tassels</option>
+            <option value="bridal">Bridal Saree Tassels</option>
+            <option value="advanced">Advanced Techniques</option>
+          </select>
+          <input
+            type="password"
+            class="login-input"
+            id="password-input"
+            placeholder="Enter password"
+            required
+          />
+          <button type="submit" class="login-button">Access Videos</button>
+          <p id="login-error" class="login-error">
+            Incorrect password. Please try again.
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Landscape Message -->
+    <div id="landscape-message">
+      <p>
+        For best viewing experience, please rotate your device to landscape
+        mode.
+      </p>
+    </div>
+
+    <div id="app-container" style="display: none">
+      <!-- Carousel View -->
+      <div class="carousel-view view-carousel">
+        <h2 style="color: white; text-align: center; margin-bottom: 20px">
+          Video Library
+        </h2>
+        <div class="carousel-controls">
+          <button class="carousel-button" id="scroll-left">◀ Previous</button>
+          <button class="carousel-button" id="scroll-right">Next ▶</button>
+        </div>
+        <div class="carousel-container" id="carousel-container">
+          <!-- Carousel items will be added here via JavaScript -->
+        </div>
+      </div>
+
+      <!-- Player View -->
+      <div class="player-container view-player">
+        <button class="back-button" id="back-button">←</button>
+        <div class="video-wrapper">
+          <div id="player"></div>
+          <!-- YouTube Blocker Overlay - NEW -->
+          <div class="youtube-blocker" id="youtube-blocker"></div>
+        </div>
+        <div class="controls">
+          <button class="control-btn" id="play-btn">▶</button>
+          <div class="progress-container" id="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+          </div>
+          <span class="time-display" id="time-display">0:00 / 0:00</span>
+          <button class="fullscreen-btn" id="fullscreen-btn">⛶</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+      // Video library data organized by class
+      const videoLibrary = {
+        fabric: {
+          password: "FABRIC_123",
+          videos: [
+            {
+              id: "-d5fjAe_dpo",
+              title: "Fabric Saree Tassels | Class-1",
+              thumbnail: "https://img.youtube.com/vi/-d5fjAe_dpo/mqdefault.jpg",
+            },
+            {
+              id: "XvNspnrdSCU",
+              title: "Fabric Saree Tassels | Class-2",
+              thumbnail: "https://img.youtube.com/vi/XvNspnrdSCU/mqdefault.jpg",
+            },
+            {
+              id: "eEL-Y0lcJA0",
+              title: "Fabric Saree Tassels | Class-3",
+              thumbnail: "https://img.youtube.com/vi/eEL-Y0lcJA0/mqdefault.jpg",
+            },
+          ],
+        },
+        bridal: {
+          password: "BRIDAL_456",
+          videos: [
+            {
+              id: "p9UoBOmRsuQ",
+              title: "Bridal Saree Tassels | Class-4",
+              thumbnail: "https://img.youtube.com/vi/p9UoBOmRsuQ/mqdefault.jpg",
+            },
+            {
+              id: "8Cr312CGoxk",
+              title: "Bridal Saree Tassels | Class-5",
+              thumbnail: "https://img.youtube.com/vi/8Cr312CGoxk/mqdefault.jpg",
+            },
+          ],
+        },
+        advanced: {
+          password: "ADV_789",
+          videos: [
+            {
+              id: "VIDEO_ID_6",
+              title: "Advanced Techniques | Class-1",
+              thumbnail:
+                "https://via.placeholder.com/320x180?text=Advanced+Class+1",
+            },
+          ],
+        },
+      };
+
+      // Variables for YouTube player
+      let player;
+      let currentVideo = null;
+      let isFullscreen = false;
+      let isPlaying = false;
+
+      // Prevent context menu (right-click) on the entire page
+      document.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
+        return false;
+      });
+
+      // Handle login
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          const selectedClass = document.getElementById("class-selector").value;
+          const passwordInput = document.getElementById("password-input").value;
+
+          if (
+            videoLibrary[selectedClass] &&
+            passwordInput === videoLibrary[selectedClass].password
+          ) {
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("app-container").style.display = "block";
+            document.title =
+              "BSR " +
+              document.getElementById("class-selector").options[
+                document.getElementById("class-selector").selectedIndex
+              ].text +
+              " Recordings";
+            initApp(videoLibrary[selectedClass].videos);
+          } else {
+            document.getElementById("login-error").style.display = "block";
+          }
+        });
+
+      // Initialize app with videos
+      function initApp(videos) {
+        // Clear existing carousel items if any
+        const carouselContainer = document.getElementById("carousel-container");
+        carouselContainer.innerHTML = "";
+
+        // Build carousel of videos
+        videos.forEach((video, index) => {
+          const item = document.createElement("div");
+          item.className = "carousel-item";
+          item.innerHTML = `
+            <img src="${video.thumbnail}" alt="${video.title}">
+            <div class="title">${video.title}</div>
+          `;
+          item.addEventListener("click", function () {
+            loadVideo(video, index);
+          });
+          carouselContainer.appendChild(item);
+        });
+
+        // Prevent orientation change to portrait on mobile
+        window.addEventListener("orientationchange", function () {
+          if (isFullscreen && window.orientation === 0) {
+            // Portrait mode
+            document.getElementById("landscape-message").style.display =
+              "block";
+            setTimeout(function () {
+              document.getElementById("landscape-message").style.display =
+                "none";
+            }, 3000);
+          }
+        });
+
+        // Initialize YouTube player if not already initialized
+        if (!player) {
+          window.onYouTubeIframeAPIReady = function () {
+            player = new YT.Player("player", {
+              height: "100%",
+              width: "100%",
+              videoId: videos[0].id, // Load first video by default
+              playerVars: {
+                controls: 0, // Hide controls
+                disablekb: 1, // Disable keyboard controls
+                fs: 0, // Hide fullscreen button
+                modestbranding: 1, // Hide YouTube logo
+                rel: 0, // Don't show related videos
+                showinfo: 0, // Hide video info
+                playsinline: 1, // Play inline on mobile
+                enablejsapi: 1, // Enable JavaScript API
+                origin: window.location.origin,
+                widget_referrer: window.location.origin,
+              },
+              events: {
+                onReady: onPlayerReady,
+                onStateChange: onPlayerStateChange,
+              },
+            });
+          };
+
+          // Check if YouTube API is already loaded
+          if (typeof YT !== "undefined" && YT.Player) {
+            window.onYouTubeIframeAPIReady();
+          }
+        } else {
+          // Player already exists, just load first video
+          if (videos.length > 0) {
+            player.cueVideoById(videos[0].id);
+          }
+        }
+
+        function onPlayerReady(event) {
+          // Enable controls since player is ready
+          document.getElementById("player").style.pointerEvents = "auto";
+          // Pause the video initially
+          event.target.pauseVideo();
+
+          // Setup YouTube blocker overlay that captures clicks and prevents redirects
+          setupYouTubeBlocker();
+        }
+
+        function onPlayerStateChange(event) {
+          if (event.data === YT.PlayerState.PLAYING) {
+            document.getElementById("play-btn").innerHTML = "❚❚";
+            isPlaying = true;
+            updateProgressBar();
+          } else if (
+            event.data === YT.PlayerState.PAUSED ||
+            event.data === YT.PlayerState.ENDED
+          ) {
+            document.getElementById("play-btn").innerHTML = "▶";
+            isPlaying = false;
+          }
+        }
+
+        // Setup YouTube blocker overlay to prevent redirects
+        function setupYouTubeBlocker() {
+          const blocker = document.getElementById("youtube-blocker");
+
+          // Handle clicks on the blocker
+          blocker.addEventListener("click", function (e) {
+            // Toggle play/pause when clicking on the video area
+            if (isPlaying) {
+              player.pauseVideo();
+            } else {
+              player.playVideo();
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          });
+        }
+
+        // Carousel scroll buttons
+        document
+          .getElementById("scroll-left")
+          .addEventListener("click", function () {
+            carouselContainer.scrollBy({ left: -300, behavior: "smooth" });
+          });
+
+        document
+          .getElementById("scroll-right")
+          .addEventListener("click", function () {
+            carouselContainer.scrollBy({ left: 300, behavior: "smooth" });
+          });
+
+        // Handle video loading
+        function loadVideo(video, index) {
+          currentVideo = video;
+          document.querySelector(".player-container").classList.add("show");
+
+          // Switch to player view
+          document.querySelector(".view-carousel").style.display = "none";
+          document.querySelector(".view-player").style.display = "block";
+
+          // Load the video
+          if (player && player.loadVideoById) {
+            player.loadVideoById(video.id);
+
+            // Auto fullscreen when loading a video - NEW
+            setTimeout(function () {
+              // Go fullscreen first
+              enterFullscreen();
+
+              // Then play after a short delay
+              setTimeout(function () {
+                player.playVideo();
+              }, 500);
+            }, 300);
+          }
+        }
+
+        // Enter fullscreen function - NEW
+        function enterFullscreen() {
+          const container = document.querySelector(".player-container");
+          container.classList.add("fullscreen-mode");
+
+          // Request browser fullscreen
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch((err) => {
+              console.log("Error attempting to enable fullscreen:", err);
+            });
+          } else if (document.documentElement.mozRequestFullScreen) {
+            document.documentElement.mozRequestFullScreen();
+          } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+          } else if (document.documentElement.msRequestFullscreen) {
+            document.documentElement.msRequestFullscreen();
+          }
+
+          isFullscreen = true;
+        }
+
+        // Play/Pause button
+        document
+          .getElementById("play-btn")
+          .addEventListener("click", function () {
+            if (isPlaying) {
+              player.pauseVideo();
+            } else {
+              player.playVideo();
+            }
+          });
+
+        // Progress bar
+        const progressContainer = document.getElementById("progress-container");
+        const progressBar = document.getElementById("progress-bar");
+        const timeDisplay = document.getElementById("time-display");
+
+        progressContainer.addEventListener("click", function (e) {
+          const rect = progressContainer.getBoundingClientRect();
+          const pos = (e.clientX - rect.left) / rect.width;
+          if (player && player.getDuration) {
+            const seekTime = player.getDuration() * pos;
+            player.seekTo(seekTime, true);
+            updateProgressBar();
+          }
+        });
+
+        function updateProgressBar() {
+          if (!player || !player.getCurrentTime) return;
+
+          const interval = setInterval(function () {
+            if (!isPlaying) {
+              clearInterval(interval);
+              return;
+            }
+
+            const current = player.getCurrentTime();
+            const duration = player.getDuration();
+            const progress = (current / duration) * 100;
+
+            progressBar.style.width = progress + "%";
+            timeDisplay.textContent =
+              formatTime(current) + " / " + formatTime(duration);
+          }, 500);
+        }
+
+        function formatTime(time) {
+          const minutes = Math.floor(time / 60);
+          const seconds = Math.floor(time % 60);
+          return minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+        }
+
+        // Back button
+        document
+          .getElementById("back-button")
+          .addEventListener("click", function () {
+            if (isFullscreen) {
+              toggleFullscreen();
+            }
+            player.pauseVideo();
+            document.querySelector(".view-carousel").style.display = "block";
+            document.querySelector(".view-player").style.display = "none";
+          });
+
+        // Fullscreen button
+        document
+          .getElementById("fullscreen-btn")
+          .addEventListener("click", toggleFullscreen);
+
+        function toggleFullscreen() {
+          const container = document.querySelector(".player-container");
+          if (!isFullscreen) {
+            container.classList.add("fullscreen-mode");
+            if (document.documentElement.requestFullscreen) {
+              document.documentElement.requestFullscreen();
+            }
+          } else {
+            container.classList.remove("fullscreen-mode");
+            if (document.exitFullscreen) {
+              document.exitFullscreen();
+            }
+          }
+          isFullscreen = !isFullscreen;
+        }
+
+        // Handle fullscreen changes
+        document.addEventListener("fullscreenchange", function () {
+          if (!document.fullscreenElement && isFullscreen) {
+            // User exited fullscreen using browser controls
+            document
+              .querySelector(".player-container")
+              .classList.remove("fullscreen-mode");
+            isFullscreen = false;
+          }
+        });
+      }
+
+      // Disable keyboard shortcuts
+      document.addEventListener(
+        "keydown",
+        function (e) {
+          // Prevent keyboard shortcuts for YouTube (like spacebar, arrows, etc.)
+          if (
+            document.getElementById("player") &&
+            (e.keyCode === 32 || // Space
+              e.keyCode === 37 || // Left arrow
+              e.keyCode === 39 || // Right arrow
+              e.keyCode === 38 || // Up arrow
+              e.keyCode === 40 || // Down arrow
+              e.keyCode === 70 || // F (fullscreen)
+              e.keyCode === 77 || // M (mute)
+              e.keyCode === 75 || // K (pause)
+              e.keyCode === 74 || // J (backward)
+              e.keyCode === 76)
+          ) {
+            // L (forward)
+            e.stopPropagation();
+          }
+        },
+        true
+      );
+    </script>
+  </body>
+</html>
